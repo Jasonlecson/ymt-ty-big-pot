@@ -86,6 +86,7 @@ const char *weather_choose[WEATHER_CHOOSE_CNT] = {
 ******************************************************************************/
 const DOWNLOAD_CMD_S download_cmd[] =
 {
+	{DPID_ON, DP_TYPE_BOOL},
   {DPID_PUMP, DP_TYPE_BOOL},
   {DPID_LIGHT, DP_TYPE_BOOL},
   {DPID_TEMP_CURRENT, DP_TYPE_VALUE},
@@ -164,7 +165,7 @@ void uart_transmit_output(unsigned char value)
 void all_data_update(void)
 {
 //    #error "请在此处理可下发可上报数据及只上报数据示例,处理完成后删除该行"
-	
+	mcu_dp_bool_update(DPID_ON,sensor_control_struct_value.on);
 	//当前浇水功能
 	mcu_dp_bool_update(DPID_PUMP,sensor_control_struct_value.pump_value);
 	//BOOL型数据上报;当前指示灯开关
@@ -215,13 +216,13 @@ void all_data_update(void)
 	mcu_dp_value_update(DPID_LIGHT_LOW_LIMIT,sensor_control_struct_value.light_low_limit_value); //VALUE型数据上报;
 	//当前植物开始日期指针,当前植物开始日期数据长度
 	sensor_control_struct_value.public_int_value = 
-	sprintf(sensor_control_struct_value.public_temp_char,"%d",sensor_control_struct_value.plant_value);
+	sprintf(sensor_control_struct_value.public_temp_char,"%d",sensor_control_struct_value.plant_value-28800);
 	mcu_dp_string_update(DPID_START_DATE,sensor_control_struct_value.public_temp_char,sensor_control_struct_value.public_int_value); //STRING型数据上报;
 	//当前累计收获次数
 	mcu_dp_value_update(DPID_CUMULATIVE_HARVEST,sensor_control_struct_value.cumulative_harvest_value); //VALUE型数据上报;
 	//当前累计培育开始时间指针,当前累计培育开始时间数据长度
 	sensor_control_struct_value.public_int_value = 
-	sprintf(sensor_control_struct_value.public_temp_char,"%d",sensor_control_struct_value.begin_date_value);
+	sprintf(sensor_control_struct_value.public_temp_char,"%d",sensor_control_struct_value.begin_date_value-28800);
 	mcu_dp_string_update(DPID_BEGIN_DATE,sensor_control_struct_value.public_temp_char,sensor_control_struct_value.public_int_value); 
 	//当前基质剩余量
 	mcu_dp_value_update(DPID_MATRIX,sensor_control_struct_value.matrix_value); //VALUE型数据上报;
@@ -267,6 +268,59 @@ void all_data_update(void)
 自动化代码模板函数,具体请用户自行实现数据处理
 ******************************************************************************/
 /*****************************************************************************
+函数名称 : dp_download_switch_handle
+功能描述 : 针对DPID_ON的处理函数
+输入参数 : value:数据源数据
+        : length:数据长度
+返回参数 : 成功返回:SUCCESS/失败返回:ERROR
+使用说明 : 可下发可上报类型,需要在处理完数据后上报处理结果至app
+*****************************************************************************/
+
+static unsigned char dp_download_switch_handle(const unsigned char value[], unsigned short length)
+{
+    //示例:当前DP类型为BOOL
+    unsigned char ret;
+    
+    unsigned char on;
+    on = mcu_get_dp_download_bool(value,length);
+	
+//		printf("\r\nfill_light_mode=%d\r\n",fill_light_mode);
+    switch(on) {
+        case 0:
+					FlashSetSwitch(0);
+					sensor_control_struct_value.on=0;
+					sensor_control_struct_value.on_copy=0;
+					sensor_light_set(0);
+					FlashSetLedState(0);
+				sensor_fill_light_set(0);
+				sensor_control_struct_value.fill_light_on = 0;
+				mcu_dp_bool_update(DPID_FILL_LIGHT,sensor_control_struct_value.fill_light_on);
+				mcu_dp_bool_update(DPID_LIGHT,sensor_control_struct_value.fill_light_on);
+					
+        break;
+        
+        case 1:
+					FlashSetSwitch(1);
+					sensor_control_struct_value.on=1;
+					sensor_control_struct_value.on_copy=1;
+					sensor_light_set(1);
+					FlashSetLedState(1);
+				mcu_dp_bool_update(DPID_LIGHT,1);
+        break;
+        
+        default:
+    
+        break;
+    }
+    
+    //处理完DP数据后应有反馈
+    ret = mcu_dp_bool_update(DPID_ON, on);
+    if(ret == SUCCESS)
+        return SUCCESS;
+    else
+        return ERROR;
+}
+/*****************************************************************************
 函数名称 : dp_download_pump_handle
 功能描述 : 针对DPID_PUMP的处理函数
 输入参数 : value:数据源数据
@@ -287,7 +341,7 @@ static unsigned char dp_download_pump_handle(const unsigned char value[], unsign
 			sensor_pump_set(0);
 			sensor_control_struct_value.pump_value=0;
 			sensor_control_struct_value.pump_value_copy=0;
-    }else {
+    }else{
         //开关开
 			sensor_pump_set(1);
 			sensor_control_struct_value.pump_value=1;
@@ -437,7 +491,9 @@ static unsigned char dp_download_type_handle(const unsigned char value[], unsign
     //VALUE类型数据处理
     
     */
-    
+    	sensor_control_struct_value.public_int_value = 
+			sprintf(sensor_control_struct_value.public_temp_char,"%d",sensor_control_struct_value.plant_value-28800);
+			mcu_dp_string_update(DPID_START_DATE,sensor_control_struct_value.public_temp_char,sensor_control_struct_value.public_int_value); //STRING型数据上报;
     //处理完DP数据后应有反馈
     ret = mcu_dp_value_update(DPID_TYPE,type);
     if(ret == SUCCESS)
@@ -553,7 +609,7 @@ static unsigned char dp_download_begin_date_handle(const unsigned char value[], 
 		printf("begin_date=%s\r\n",sensor_control_struct_value.public_temp_char);
 		value1 = atoi(sensor_control_struct_value.public_temp_char);
 		sensor_control_struct_value.begin_date_value = value1;
-		FlashSetOneDataPlant(sensor_control_struct_value.begin_date_value);
+		FlashSetOneDataPlant(sensor_control_struct_value.begin_date_value-28800);
 	}
 	else{//缓存不够,错误
 		
@@ -575,7 +631,7 @@ static unsigned char dp_download_begin_date_handle(const unsigned char value[], 
     */
     
     //处理完DP数据后应有反馈
-    ret = mcu_dp_string_update(DPID_BEGIN_DATE,value, length);
+    ret = mcu_dp_string_update(DPID_BEGIN_DATE,value-28800, length);
     if(ret == SUCCESS)
         return SUCCESS;
     else
@@ -991,6 +1047,10 @@ unsigned char dp_download_handle(unsigned char dpid,const unsigned char value[],
     ***********************************/
     unsigned char ret;
     switch(dpid) {
+        case DPID_ON:
+            //浇水功能处理函数
+            ret = dp_download_switch_handle(value,length);
+        break;
         case DPID_PUMP:
             //浇水功能处理函数
             ret = dp_download_pump_handle(value,length);

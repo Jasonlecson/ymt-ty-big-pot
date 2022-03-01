@@ -44,7 +44,18 @@ u16 FlashGetWaterCount(void)
 	ReadDat = flash_helper_struct.FlashHelperData[1];
 	return ReadDat == 65535 ? 0 : ReadDat;
 }
+void FlashSetSwitch(uint16_t data)
+{
+	u16 ReadDat = data;
+	STMFLASH_Write(FLASH_USE_SWITCH,&ReadDat,1);
+}
 
+u16 FlashGetSwitch(void)
+{
+	u16 ReadDat = 0;
+	STMFLASH_Read(FLASH_USE_SWITCH,&ReadDat,1);
+	return ReadDat == 65535 ? 0 : ReadDat;
+}
 
 //…Ë÷√LED◊¥Ã¨
 void FlashSetLedState(uint16_t data)

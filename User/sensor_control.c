@@ -35,6 +35,7 @@ time_t timestamp; //时间戳
 time_t timestamp_copy; //时间戳(会转换为北京时间)
 char timezone = 0; //时区偏差(默认8,北京时间)
 
+extern int fill_light_auto_off_cnt;
 
 sensor_control_struct sensor_control_struct_value;
 event_struct event_struct_value;
@@ -242,7 +243,8 @@ void sensor_data_value_init(void){
 	//安全值-浇水报警时间
 	sensor_control_struct_value.safe_limit_time[0] = SAFE_LIMIT_TIME_START;
 	sensor_control_struct_value.safe_limit_time[1] = SAFE_LIMIT_TIME_STOP;
-	
+	sensor_control_struct_value.on = 1;
+	sensor_control_struct_value.on_copy = 1;
 }
 
 /**
@@ -366,8 +368,7 @@ void sensor_data_collection(void)
 	}
 	
 	
-	/*******************************************水泵*******************************************/
-	sensor_control_struct_value.pump_value = RelayGet();
+
 	
 	/*******************************************指示灯*******************************************/
 	sensor_control_struct_value.light_value = wifi_state_led_get();
@@ -497,6 +498,11 @@ void sensor_data_appear(void){
 	if(sensor_control_struct_value.fill_light_value != sensor_control_struct_value.fill_light_value_copy){
 		sensor_control_struct_value.fill_light_value_copy = sensor_control_struct_value.fill_light_value;
 		mcu_dp_bool_update(DPID_FILL_LIGHT,sensor_control_struct_value.fill_light_value);//上报
+	}
+
+	if(sensor_control_struct_value.on != sensor_control_struct_value.on_copy){
+		sensor_control_struct_value.on_copy = sensor_control_struct_value.on;
+		mcu_dp_bool_update(DPID_ON,sensor_control_struct_value.on);//上报
 	}
 	
 	//浇水模式
@@ -702,7 +708,7 @@ void illumination_intensity_statistics(void){
 			{	//统计光照强度 (早晚8点)
 				if(lcTime->tm_hour >= sensor_control_struct_value.illumination_statistics_timer_start && lcTime->tm_hour < sensor_control_struct_value.illumination_statistics_timer_stop)
 				{
-					if(sensor_control_struct_value.illumination_statistics_timer_delay>1000*60)//1分钟
+					if(sensor_control_struct_value.illumination_statistics_timer_delay>1000*180)//1分钟
 					{
 						sensor_control_struct_value.illumination_statistics_timer_delay = 0;
 						
@@ -727,20 +733,16 @@ void illumination_intensity_statistics(void){
 							
 							/*****如果低于设置的光照阈值,打开补光灯****/
 							if(value <= sensor_control_struct_value.safe_illumination[0]){
-								if(FlashGetFillLightMode() == 0){//自动打开补光灯
+								if(FlashGetFillLightMode() == 0 && sensor_control_struct_value.on == 1){//自动打开补光灯
 									sensor_fill_light_set(1);//打开补光灯
+									fill_light_auto_off_cnt = 0;
 									printf("自动打开补光灯\r\n");
 								}
 								else{
 									printf("非自动打开补光灯\r\n");
 								}
 							}
-							else{
-								if(FlashGetFillLightMode() == 0){//自动打开补光灯
-									sensor_fill_light_set(0);//关闭补光灯
-								}
-								printf("关闭补光灯\r\n");
-							}
+
 							
 							//获取存储的光照强度, 存储的次数, 最后统计数据时的时间戳
 							sensor_control_struct_value.illumination_statistics_sum = FlashGetIlluminationStatistics(&sensor_control_struct_value.illumination_statistics_count,&endtime);
@@ -775,6 +777,9 @@ void illumination_intensity_statistics(void){
 							FlashSetIlluminationStatistics(sensor_control_struct_value.illumination_statistics_sum,sensor_control_struct_value.illumination_statistics_count,timestamp_copy);//存储数据
 						}
 					}
+							if(FlashGetFillLightMode() == 0 && fill_light_auto_off_cnt >= 1800){//自动打开补光灯
+								sensor_fill_light_set(0);//关闭补光灯
+							}
 				}
 				else
 				{
@@ -806,7 +811,7 @@ void illumination_intensity_statistics(void){
 					/*补光灯是打开的,检测光照强度*/
 					if(fill_light_get())
 					{
-						if(sensor_control_struct_value.illumination_statistics_timer_delay1>1000*60)//1分钟
+						if(sensor_control_struct_value.illumination_statistics_timer_delay1>1000*180)//1分钟
 						{
 							sensor_control_struct_value.illumination_statistics_timer_delay1 = 0;
 							
@@ -826,7 +831,7 @@ void illumination_intensity_statistics(void){
 								
 								/*****如果低于设置的光照阈值,打开补光灯****/
 								if(value <= sensor_control_struct_value.safe_illumination[0]){
-									if(FlashGetFillLightMode() == 0){//自动打开补光灯
+									if(FlashGetFillLightMode() == 0 && sensor_control_struct_value.on == 1){//自动打开补光灯
 										sensor_fill_light_set(1);//打开补光灯
 										printf("自动打开补光灯\r\n");
 									}
@@ -834,15 +839,16 @@ void illumination_intensity_statistics(void){
 										printf("非自动打开补光灯\r\n");
 									}
 								}
-								else{
+								else{ 
 									if(FlashGetFillLightMode() == 0){//自动打开补光灯
-										sensor_fill_light_set(0);//关闭补光灯
-									}
-									printf("关闭补光灯\r\n");
+								sensor_fill_light_set(0);//关闭补光灯
 								}
+								printf("关闭补光灯\r\n");
+							}
 							}
 						}
 					}
+
 				}
 			}
 		}
@@ -983,7 +989,7 @@ void WateringCirculationFunction(void)
 				//湿度低
 				if(sensor_control_struct_value.humidity_value<sensor_control_struct_value.safe_humidity[0] && 
 					//自动模式 && 水箱有水
-					sensor_control_struct_value.mode_value == 0 /*&& sensor_control_struct_value.water_stage_value>SAFE_HYDROPENIA*/){
+					sensor_control_struct_value.mode_value == 0 && sensor_control_struct_value.on == 1/*&& sensor_control_struct_value.water_stage_value>SAFE_HYDROPENIA*/){
 					sensor_pump_set(1);
 				}
 			}

@@ -44,7 +44,7 @@ int timer2_water_lack_cnt=0;//检测缺水
 int timer2_water_full_cnt=0;//检测水满
 int timer2_buzzer_cnt=0;//控制蜂鸣器蜂鸣时间
 int timer2_water_clear_flag_cnt=0;//超时清除缺水和水满标志
-
+int fill_light_auto_off_cnt = 0;
 /**
 * @brief  定时器2配置
 * @param  None
@@ -98,6 +98,7 @@ void TimestampAddCountFun(void){
 		if(TimestampAddCount>=1000){
 			TimestampAddCount=0;
 			timestamp++;
+			fill_light_auto_off_cnt++;
 		}
 	}
 }
@@ -257,6 +258,7 @@ void TIM2_IRQHandler(void)
 		sensor_control_struct_value.illumination_statistics_timer_delay++;
 		
 		sensor_control_struct_value.illumination_statistics_timer_delay1++;
+		
 	}
 }
 

@@ -43,6 +43,10 @@ u16 FlashGetFillLightMode(void);
 void FlashSetSafe(uint16_t L,uint16_t H,safe_type_typedef safe_type);
 void FlashGetSafe(uint16_t* L,uint16_t* H,safe_type_typedef safe_type);
 
+void FlashSetSwitch(uint16_t data);//////////////
+//补光灯打开模式 0:自动  1:手动
+u16 FlashGetSwitch(void);
+
 //设置光照强度报警值
 void FlashSetLightAlarm(int value);
 //获取光照强度报警值
