@@ -153,7 +153,7 @@ void uart_transmit_output(unsigned char value)
 此函数为MCU内部必须调用
 用户也可调用此函数实现全部数据上报
 ******************************************************************************/
-
+extern int fill_light_auto_off_cnt;
 //自动化生成数据上报函数
 
 /**
@@ -1012,6 +1012,7 @@ static unsigned char dp_download_fill_light_handle(const unsigned char value[], 
     }else {
         //开关开
 			sensor_fill_light_set(1);
+			fill_light_auto_off_cnt = 0;
     }
   
     //处理完DP数据后应有反馈

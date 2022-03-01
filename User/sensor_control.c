@@ -708,7 +708,7 @@ void illumination_intensity_statistics(void){
 			{	//统计光照强度 (早晚8点)
 				if(lcTime->tm_hour >= sensor_control_struct_value.illumination_statistics_timer_start && lcTime->tm_hour < sensor_control_struct_value.illumination_statistics_timer_stop)
 				{
-					if(sensor_control_struct_value.illumination_statistics_timer_delay>1000*180)//1分钟
+					if(sensor_control_struct_value.illumination_statistics_timer_delay>1000*360)//1分钟
 					{
 						sensor_control_struct_value.illumination_statistics_timer_delay = 0;
 						
@@ -833,6 +833,7 @@ void illumination_intensity_statistics(void){
 								if(value <= sensor_control_struct_value.safe_illumination[0]){
 									if(FlashGetFillLightMode() == 0 && sensor_control_struct_value.on == 1){//自动打开补光灯
 										sensor_fill_light_set(1);//打开补光灯
+										fill_light_auto_off_cnt = 0;
 										printf("自动打开补光灯\r\n");
 									}
 									else{
