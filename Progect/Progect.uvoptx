@@ -178,22 +178,32 @@
         <Ww>
           <count>4</count>
           <WinNumber>1</WinNumber>
-          <ItemText>a,0x0A</ItemText>
+          <ItemText>sensor_control_struct_value.on,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>5</count>
           <WinNumber>1</WinNumber>
-          <ItemText>b,0x0A</ItemText>
+          <ItemText>timestamp,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>6</count>
           <WinNumber>1</WinNumber>
-          <ItemText>FlashGetFillLightMode()</ItemText>
+          <ItemText>sensor_control_struct_value.report_night_value,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>7</count>
           <WinNumber>1</WinNumber>
-          <ItemText>sensor_control_struct_value.on,0x0A</ItemText>
+          <ItemText>sensor_control_struct_value.safe_limit_time,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>8</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>lcTime-&gt;tm_hour,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>9</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>a,0x0A</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>

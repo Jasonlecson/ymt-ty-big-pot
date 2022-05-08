@@ -70,12 +70,12 @@ void factory_reset(void){
 	FlashSetWaterCount(sensor_control_struct_value.watering_count);
 	
 	//种植时间
-	sensor_control_struct_value.plant_value=0;
+	sensor_control_struct_value.plant_value=timestamp - 28800;
 //	sensor_control_struct_value.plant_value_copy=0;
 	FlashSetDataPlant(sensor_control_struct_value.plant_value);
 	
 	//首次种植时间
-	sensor_control_struct_value.plant_value=0;
+	sensor_control_struct_value.begin_date_value=timestamp - 28800;
 //	sensor_control_struct_value.plant_value_copy=0;
 	FlashSetOneDataPlant(sensor_control_struct_value.plant_value);
 	
@@ -370,11 +370,7 @@ void sensor_data_collection(void)
 	
 
 	
-	/*******************************************指示灯*******************************************/
-	sensor_control_struct_value.light_value = wifi_state_led_get();
-	
-	/*******************************************补光灯*******************************************/
-	sensor_control_struct_value.fill_light_value = fill_light_get();
+
 	
 	
 	
@@ -923,6 +919,7 @@ void event_report_fun(void){
 				if(event_struct_value.hydropenia_timer_cnt >= TIMER_COMPARE_20MIN){
 					event_struct_value.hydropenia_timer_cnt = 0;
 					mcu_dp_fault_update(DPID_FAULT,FAULT_WATER_HYDROPENIA);//上报事件
+					
 				}
 				//水位高
 				if(event_struct_value.high_water_timer_cnt >= TIMER_COMPARE_20MIN){

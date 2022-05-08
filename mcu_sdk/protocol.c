@@ -216,13 +216,13 @@ void all_data_update(void)
 	mcu_dp_value_update(DPID_LIGHT_LOW_LIMIT,sensor_control_struct_value.light_low_limit_value); //VALUE型数据上报;
 	//当前植物开始日期指针,当前植物开始日期数据长度
 	sensor_control_struct_value.public_int_value = 
-	sprintf(sensor_control_struct_value.public_temp_char,"%d",sensor_control_struct_value.plant_value-28800);
+	sprintf(sensor_control_struct_value.public_temp_char,"%d",sensor_control_struct_value.plant_value);
 	mcu_dp_string_update(DPID_START_DATE,sensor_control_struct_value.public_temp_char,sensor_control_struct_value.public_int_value); //STRING型数据上报;
 	//当前累计收获次数
 	mcu_dp_value_update(DPID_CUMULATIVE_HARVEST,sensor_control_struct_value.cumulative_harvest_value); //VALUE型数据上报;
 	//当前累计培育开始时间指针,当前累计培育开始时间数据长度
 	sensor_control_struct_value.public_int_value = 
-	sprintf(sensor_control_struct_value.public_temp_char,"%d",sensor_control_struct_value.begin_date_value-28800);
+	sprintf(sensor_control_struct_value.public_temp_char,"%d",sensor_control_struct_value.begin_date_value);
 	mcu_dp_string_update(DPID_BEGIN_DATE,sensor_control_struct_value.public_temp_char,sensor_control_struct_value.public_int_value); 
 	//当前基质剩余量
 	mcu_dp_value_update(DPID_MATRIX,sensor_control_struct_value.matrix_value); //VALUE型数据上报;
@@ -457,7 +457,7 @@ static unsigned char dp_download_type_handle(const unsigned char value[], unsign
 					sensor_control_struct_value.love_value = sensor_control_struct_value.love_value + 20;
 					FlashSetLoveValue(sensor_control_struct_value.love_value);
 					//设置种植时间
-					sensor_control_struct_value.plant_value = timestamp;
+					sensor_control_struct_value.plant_value = timestamp-28800;
 					FlashSetDataPlant(sensor_control_struct_value.plant_value);
 				}
 				else{
@@ -492,7 +492,7 @@ static unsigned char dp_download_type_handle(const unsigned char value[], unsign
     
     */
     	sensor_control_struct_value.public_int_value = 
-			sprintf(sensor_control_struct_value.public_temp_char,"%d",sensor_control_struct_value.plant_value-28800);
+			sprintf(sensor_control_struct_value.public_temp_char,"%d",sensor_control_struct_value.plant_value);
 			mcu_dp_string_update(DPID_START_DATE,sensor_control_struct_value.public_temp_char,sensor_control_struct_value.public_int_value); //STRING型数据上报;
     //处理完DP数据后应有反馈
     ret = mcu_dp_value_update(DPID_TYPE,type);
@@ -608,8 +608,8 @@ static unsigned char dp_download_begin_date_handle(const unsigned char value[], 
 		}
 		printf("begin_date=%s\r\n",sensor_control_struct_value.public_temp_char);
 		value1 = atoi(sensor_control_struct_value.public_temp_char);
-		sensor_control_struct_value.begin_date_value = value1;
-		FlashSetOneDataPlant(sensor_control_struct_value.begin_date_value-28800);
+		sensor_control_struct_value.begin_date_value = value1-28800;
+		FlashSetOneDataPlant(sensor_control_struct_value.begin_date_value);
 	}
 	else{//缓存不够,错误
 		
@@ -631,7 +631,7 @@ static unsigned char dp_download_begin_date_handle(const unsigned char value[], 
     */
     
     //处理完DP数据后应有反馈
-    ret = mcu_dp_string_update(DPID_BEGIN_DATE,value-28800, length);
+    ret = mcu_dp_string_update(DPID_BEGIN_DATE,value, length);
     if(ret == SUCCESS)
         return SUCCESS;
     else
@@ -1047,6 +1047,8 @@ unsigned char dp_download_handle(unsigned char dpid,const unsigned char value[],
     完成用需要将处理结果反馈至APP端,否则APP会认为下发失败
     ***********************************/
     unsigned char ret;
+//	if(wifi_state == WIFI_CONN_CLOUD)
+		{
     switch(dpid) {
         case DPID_ON:
             //浇水功能处理函数
@@ -1124,6 +1126,7 @@ unsigned char dp_download_handle(unsigned char dpid,const unsigned char value[],
         default:
         break;
     }
+	}
     return ret;
 }
 

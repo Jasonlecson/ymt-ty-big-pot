@@ -125,6 +125,11 @@ int main(void)
 		}
 			/*******************************************水泵*******************************************/
 			sensor_control_struct_value.pump_value = RelayGet();
+			/*******************************************指示灯*******************************************/
+			sensor_control_struct_value.light_value = wifi_state_led_get();
+	
+			/*******************************************补光灯*******************************************/
+			sensor_control_struct_value.fill_light_value = fill_light_get();
 			//控制浇水一段时间以后停止浇水
 			sensor_watering();
 		wifi_uart_service();
@@ -244,14 +249,14 @@ void KeyFun(void)
 		KeyValueTemp[4] = 0;//清零以后,只有按键按下然后松开的时候才会进入
 		//执行的代码
 		printf("\r\nKeyUP\r\n");
-		if(Key_down_value>100 && Key_down_value<2000)
-			{
-				if(wifi_state == WIFI_CONN_CLOUD)
-					{
-					printf("\r\nKeyUP _ 浇水\r\n");
-					sensor_pump_set(1);
-					}
-			}
+//		if(Key_down_value>100 && Key_down_value<2000)
+//			{
+//				if(wifi_state == WIFI_CONN_CLOUD)
+//					{
+//					printf("\r\nKeyUP _ 浇水\r\n");
+//					sensor_pump_set(1);
+//					}
+//			}
 	}
 }
 
